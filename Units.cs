@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace _25._2ExamenIndividual
 {
-    abstract class Units : IReceiveDamage
+    abstract class Units : IReceiveDamage, IGetLife, IGetDmg
     {
         protected int life;
         protected int dmg;
@@ -16,5 +16,7 @@ namespace _25._2ExamenIndividual
             this.dmg = dmg;
         }
         public abstract void ReceiveDamage(int dmg);
+        public abstract int GetLife();
+        public abstract int GetDmg();
     }
 }

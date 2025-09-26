@@ -6,12 +6,8 @@ using System.Threading.Tasks;
 
 namespace _25._2ExamenIndividual
 {
-    class Program
+    interface IGetLife
     {
-        static void Main(string[] args)
-        {
-            Game game = new Game();
-            game.StartGame();
-        }
+        int GetLife();
     }
 }
