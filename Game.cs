@@ -16,24 +16,58 @@ namespace _25._2ExamenIndividual
         private static EnemyUnits enemyUnits = new EnemyUnits(1, 1);
         private int basePlayerLife, baseEnemyLife;
         private int turn, money, chooseUnitOption;
+        bool game;
         List<PlayerUnits> playerUnitsList = new List<PlayerUnits>();
+        List<EnemyUnits> enemyUnitsList = new List<EnemyUnits>();
+        IEnemyStrategy currentEnemyStrategy;
         public void StartGame()
         {
             playerUnits.SetPlayerUnitsInstance();
             enemyUnits.SetEnemyUnitsInstance();
+            currentEnemyStrategy = new EnemyStrategy1(fibonacciIndex, enemyUnitsList);
             SetBasesLife();
             SetFuncsActions();
             SetGame();
         }
         public void SetGame()
         {
-            PlayerTurn();
+            game = true;
+            turn = 1;
+            while (game)
+            {
+                PlayerTurn();
+                PlayerUnitsAttack();
+                CheckBasesLife();
+                Console.ReadLine();
+                EnemyTurn();
+                EnemyUnitsAttack();
+                Console.ReadLine();
+                CheckBasesLife();
+                turn++;
+            }
             
         }
         void SetBasesLife()
         {
-            basePlayerLife = 20;
-            baseEnemyLife = 20;
+            basePlayerLife = 30;
+            baseEnemyLife = 30;
+        }
+        void CheckBasesLife()
+        {
+            if (basePlayerLife <= 0)
+            {
+                Console.WriteLine($"Lástima has perdido. Fin del juego. La partida duró {turn} de turnos");
+                Console.ReadLine();
+                game = false;
+                return;
+            }
+            else if(baseEnemyLife <= 0)
+            {
+                Console.WriteLine($"Felicidades has ganado. Fin del juego.  La partida duró {turn} de turnos");
+                Console.ReadLine();
+                game = false;
+                return;
+            }
         }
         void SetFuncsActions()
         {
@@ -57,16 +91,7 @@ namespace _25._2ExamenIndividual
             bool playerTurn = true;
             Console.WriteLine($"Turn {turn}. Es tu turno");
             Console.WriteLine($"Tu base tiene {basePlayerLife} de vida");
-            if (basePlayerLife >= basePlayerLife / 2)
-            {
-                money += 15;
-                Console.WriteLine($"Tu base generó 15 de monedas");
-            }
-            else
-            {
-                money += 7;
-                Console.WriteLine($"Tu base generó 7 de monedas");
-            }            
+            GetPlayerMoney();   
             while (playerTurn)
             {
                 Console.WriteLine($"Tienes {money} monedas");
@@ -74,7 +99,9 @@ namespace _25._2ExamenIndividual
                 Console.WriteLine($"1. Para comprar una unidad de ataque");
                 Console.WriteLine($"2. Para comprar una unidad de recolección");
                 Console.WriteLine($"3. Para mejorar una unidad");
-                Console.WriteLine($"4. Terminar");
+                Console.WriteLine($"4. Para ver las unidades");
+                Console.WriteLine($"5. Para ver las unidades del enemigo");
+                Console.WriteLine($"6. Terminar");
                 string opt;
                 opt = Console.ReadLine();
                 if(int.TryParse(opt, out chooseUnitOption))
@@ -82,7 +109,7 @@ namespace _25._2ExamenIndividual
                     switch (chooseUnitOption)
                     {
                         case 1:
-                            CreatePlayerAtackUnits();
+                            CreatePlayerAttackUnits();
                             break;
                         case 2:
                             CreatePlayerRecolectionUnits();
@@ -91,6 +118,30 @@ namespace _25._2ExamenIndividual
                             UpgradePlayerUnits();
                             break;
                         case 4:
+                            if (playerUnitsList.Count > 0)
+                            {
+                                ShowPlayerUnits();
+                                Console.ReadLine();
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No tienes unidades");
+                                Console.ReadLine();
+                            }
+                            break;
+                        case 5:
+                            if (enemyUnitsList.Count > 0)
+                            {
+                                ShowEnemyUnits();
+                                Console.ReadLine();
+                            }
+                            else
+                            {
+                                Console.WriteLine($"El enemigo no tiene unidades");
+                                Console.ReadLine();
+                            }
+                            break;
+                        case 6:
                             playerTurn = false;
                             break;
                         default:
@@ -106,7 +157,7 @@ namespace _25._2ExamenIndividual
                 }
             }
         }
-        void CreatePlayerAtackUnits()
+        void CreatePlayerAttackUnits()
         {
             string conf;
             int confirm;
@@ -207,15 +258,15 @@ namespace _25._2ExamenIndividual
                             int selection;
                             Console.WriteLine($"Escoja la mejora");
                             Console.WriteLine($"1. Ataque");
-                            Console.WriteLine($"2. Monedas Generadas");
-                            Console.WriteLine($"3. Vida");
+                            Console.WriteLine($"2. Vida");
+                            Console.WriteLine($"3. Monedas Generadas");
                             select = Console.ReadLine();
                             if (int.TryParse(select, out selection))
                             {
                                 switch (selection)
                                 {
                                     case 1:
-                                        UpgradePlayerAtackUnits(option);
+                                        UpgradePlayerAttackUnits(option);
                                         break;
                                     case 2:
                                         UpgradePlayerLifeUnits(option);
@@ -250,11 +301,11 @@ namespace _25._2ExamenIndividual
             }
             else
             {
-                Console.WriteLine($"Todavía no tiene unidades");
+                Console.WriteLine($"No tienes unidades");
                 Console.ReadLine();
             }
         }
-        void UpgradePlayerAtackUnits(int index)
+        void UpgradePlayerAttackUnits(int index)
         {
             string conf;
             int confirm;
@@ -374,7 +425,60 @@ namespace _25._2ExamenIndividual
                 Console.ReadLine();
             }
         }
-
+        void PlayerUnitsAttack()
+        {
+            bool playerAttacking = true;
+            List<PlayerUnits> unitsPlayerAttack = new List<PlayerUnits>();
+            unitsPlayerAttack.Clear();
+            for(int i = 0; i < playerUnitsList.Count; i++)
+            {
+                unitsPlayerAttack.Add(playerUnitsList[i]);
+            }
+            while(playerAttacking)
+            {
+                if(unitsPlayerAttack.Count > 0)
+                {
+                    if (enemyUnitsList.Count > 0)
+                    {
+                        Console.WriteLine("Tus unidades atacan a las unidades del enemigo");
+                        for (int i = 0; i < unitsPlayerAttack.Count; i++)
+                        {
+                            if (enemyUnitsList.Count > 0 && unitsPlayerAttack.Count > 0)
+                            {
+                                enemyUnitsList[0].ReceiveDamage(unitsPlayerAttack[0].GetDmg());
+                                unitsPlayerAttack.RemoveAt(0);
+                                if(enemyUnitsList[0].GetLife() <= 0)
+                                {
+                                    enemyUnitsList.RemoveAt(0);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        
+                        Console.WriteLine("Tus unidades atacan a la base del enemigo");
+                        for (int i = 0; i < unitsPlayerAttack.Count; i++)
+                        {
+                            int damageDealt = 0;
+                            if (unitsPlayerAttack.Count > 0)
+                            {
+                                baseEnemyLife -= unitsPlayerAttack[0].GetDmg();
+                                damageDealt += unitsPlayerAttack[0].GetDmg();
+                                Console.WriteLine($"Tus unidades infligieron {damageDealt} a la base del enemigo");
+                                Console.WriteLine($"A la base del enemigo le queda {baseEnemyLife} de vida");
+                                unitsPlayerAttack.RemoveAt(0);
+                            }                            
+                        }
+                        
+                    }
+                }
+                else
+                {
+                    playerAttacking = false;
+                }
+            }
+        }
         void ShowPlayerUnits()
         {
             int position = 0;
@@ -384,5 +488,145 @@ namespace _25._2ExamenIndividual
                 position++;
             }
         }
-    }
+        void ShowEnemyUnits()
+        {
+            int position = 0;
+            foreach (EnemyUnits enemyUnit in enemyUnitsList)
+            {
+                Console.WriteLine($"{position}. Unidad {position + 1} tiene {enemyUnit.GetLife()} de vida, hace {enemyUnit.GetDmg()} de daño");
+                position++;
+            }
+        }
+        void GetPlayerMoney()
+        {
+            int moneyGenerated = 0;
+            if (basePlayerLife >= basePlayerLife / 2)
+            {
+                money += 15;
+                Console.WriteLine($"Tu base generó 15 de monedas");
+            }
+            else
+            {
+                money += 7;
+                Console.WriteLine($"Tu base generó 7 de monedas");
+            }
+            if(playerUnitsList.Count > 0)
+            {
+                foreach (PlayerUnits playerUnit in playerUnitsList)
+                {
+                    money += playerUnit.GetMoney();
+                    moneyGenerated += playerUnit.GetMoney();
+                }
+                Console.WriteLine($"Tus unidades generaron {moneyGenerated} de dinero esta ronda");
+            }            
+        }
+
+        float fibonacciIndex;
+        void EnemyTurn()
+        {
+            Console.WriteLine($"Turn {turn}. Es turno del enemigo");
+            Fibonacci();
+            if (fibonacciIndex > 0)
+            {
+                if (fibonacciIndex % 2 == 0)
+                {
+                    currentEnemyStrategy = new EnemyStrategy1(fibonacciIndex, enemyUnitsList);
+                    currentEnemyStrategy.CreateEnemyUnits();
+                    Console.WriteLine($"El enemigo creó {fibonacciIndex} enemigos con {enemyUnitsList[enemyUnitsList.Count - 1].GetLife()} de vida y {enemyUnitsList[enemyUnitsList.Count - 1].GetDmg()} de daño");
+                }
+                else
+                {
+                    currentEnemyStrategy = new EnemyStrategy2(fibonacciIndex, enemyUnitsList);
+                    currentEnemyStrategy.CreateEnemyUnits();
+                    if(fibonacciIndex == 1)
+                    {
+                        Console.WriteLine($"El enemigo creó {fibonacciIndex} enemigo con {enemyUnitsList[enemyUnitsList.Count - 1].GetLife()} de vida y {enemyUnitsList[enemyUnitsList.Count - 1].GetDmg()} de daño");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"El enemigo creó {fibonacciIndex} enemigos con {enemyUnitsList[enemyUnitsList.Count - 1].GetLife()} de vida y {enemyUnitsList[enemyUnitsList.Count - 1].GetDmg()} de daño");
+                    }
+                    
+                }
+            }
+            else
+            {
+                Console.WriteLine($"El enemigo creó {fibonacciIndex} enemigos");
+            }
+        }
+        void Fibonacci()
+        {
+            float a = 0, b = 1;
+            for (int i = 0; i < turn; i++)
+            {
+                if (i <= 1)
+                {
+                    fibonacciIndex = i;
+                    Console.WriteLine($"fibonacciIndex = {fibonacciIndex} ");
+                }
+                else
+                {
+                    fibonacciIndex = a + b;
+                    a = b;
+                    b = fibonacciIndex;
+                    Console.WriteLine($"a = {a} ");
+                    Console.WriteLine($"b = {b} ");
+                    Console.WriteLine($"fibonacciIndex = {fibonacciIndex} ");
+                }
+            }
+        }
+        void EnemyUnitsAttack()
+        {
+            bool enemyAttacking = true;
+            List<EnemyUnits> unitsEnemyAttack = new List<EnemyUnits>();
+            unitsEnemyAttack.Clear();
+            for (int i = 0; i < enemyUnitsList.Count; i++)
+            {
+                unitsEnemyAttack.Add(enemyUnitsList[i]);
+            }
+            while (enemyAttacking)
+            {
+                if (unitsEnemyAttack.Count > 0)
+                {
+                    if (playerUnitsList.Count > 0)
+                    {
+                        Console.WriteLine("Las unidades enemigas atacan a tus unidades");
+                        for (int i = 0; i < unitsEnemyAttack.Count; i++)
+                        {
+                            if (unitsEnemyAttack.Count > 0 && playerUnitsList.Count > 0)
+                            {
+                                playerUnitsList[0].ReceiveDamage(unitsEnemyAttack[0].GetDmg());
+                                unitsEnemyAttack.RemoveAt(0);
+                                if (playerUnitsList[0].GetLife() <= 0)
+                                {
+                                    playerUnitsList.RemoveAt(0);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Las unidades enimgas atacan a tu base");
+                        for (int i = 0; i < unitsEnemyAttack.Count; i++)
+                        {
+                            int damageDealt = 0;
+                            if (unitsEnemyAttack.Count > 0)
+                            {
+                                basePlayerLife -= unitsEnemyAttack[0].GetDmg();
+                                damageDealt += unitsEnemyAttack[0].GetDmg();
+                                unitsEnemyAttack.RemoveAt(0);
+                                Console.WriteLine($"Las unidades enemigas infligieron {damageDealt} a tu base");
+                                Console.WriteLine($"A tu base le queda {basePlayerLife} de vida");
+                            }
+                        }
+                        
+                    }
+                }
+                else
+                {
+                    enemyAttacking = false;
+                }
+            }
+        }
+    }    
 }
